@@ -2,7 +2,7 @@
 # 🤖 Telegram AI Summarizer Bot
 # ===============================
 
-# 📦 Imports
+# 📦 Telegram Bot Imports
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -11,8 +11,14 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
+
+# 📦 System / Environment Imports
 import os
 from dotenv import load_dotenv
+
+# 📦 AI Summarization
+from summarizer import summarize_text
+
 
 # 🔐 Load environment variables from a .env file
 load_dotenv()
@@ -46,6 +52,18 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     recent = "\n".join(chat_history[-10:])
     await update.message.reply_text(f"🧾 Last 10 messages:\n{recent}")
 
+# /summary command – Summarizes the last few messages
+async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not chat_history:
+        await update.message.reply_text("❌ No chat history to summarize.")
+        return
+
+    full_text = "\n".join(chat_history)
+    await update.message.reply_text("🔄 Summarizing, please wait...")
+
+    summary = summarize_text(full_text)
+    await update.message.reply_text(f"📋 Summary:\n{summary}")
+
 
 # ===============================
 # 📝 Message Handler
@@ -63,18 +81,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ===============================
-# 🚀 Application Setup
+# 🚀 Bot Application Setup
 # ===============================
 
-# Create the Telegram Application using the bot token
 app = ApplicationBuilder().token(bot_token).build()
 
-# Register all handlers
+# Register Command Handlers
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("hello", hello))
 app.add_handler(CommandHandler("history", history))
+app.add_handler(CommandHandler("summarize", summarize))
+
+# Register Message Handler
 app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
-# ✅ Start the bot
+# Start polling
 print("✅ Bot is running...")
 app.run_polling()
