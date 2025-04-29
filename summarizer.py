@@ -7,11 +7,20 @@ def summarize_text(text):
     if not text.strip():
         return "Nothing to summarize."
 
-    # Reduce text to fit model capacity
-    text = text[-1500:]  # Last 1500 characters (approx 300-400 words)
+    # Break into chunks if needed
+    chunks = []
+    max_chunk_size = 1500  # characters
+    while len(text) > max_chunk_size:
+        chunks.append(text[:max_chunk_size])
+        text = text[max_chunk_size:]
+    chunks.append(text)
 
-    try:
-        summary = summarizer(text, max_length=120, min_length=40, do_sample=False)
-        return summary[0]['summary_text']
-    except Exception as e:
-        return f"⚠️ Error during summarization: {str(e)}"
+    summaries = []
+    for chunk in chunks:
+        try:
+            summary = summarizer(chunk, max_length=120, min_length=40, do_sample=False)
+            summaries.append(summary[0]['summary_text'])
+        except Exception as e:
+            summaries.append(f"⚠️ Error: {str(e)}")
+
+    return "\n".join(summaries)

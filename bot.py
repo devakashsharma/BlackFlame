@@ -52,17 +52,34 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     recent = "\n".join(chat_history[-10:])
     await update.message.reply_text(f"🧾 Last 10 messages:\n{recent}")
 
+
 # /summary command – Summarizes the last few messages
 async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not chat_history:
         await update.message.reply_text("❌ No chat history to summarize.")
         return
 
-    full_text = "\n".join(chat_history)
-    await update.message.reply_text("🔄 Summarizing, please wait...")
+    # Tell user bot is working
+    thinking_message = await update.message.reply_text("🤔 Summarizing, please wait...")
 
+    full_text = "\n".join(chat_history)
     summary = summarize_text(full_text)
-    await update.message.reply_text(f"📋 Summary:\n{summary}")
+
+    # Edit the "thinking..." message to show summary
+    await thinking_message.edit_text(f"📋 *Summary:*\n{summary}", parse_mode='Markdown')
+
+
+# /help command – Displays available commands
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = (
+        "🤖 *Available Commands:*\n\n"
+        "/start - Start the bot\n"
+        "/hello - Say hello\n"
+        "/history - Show last 10 messages\n"
+        "/summarize - Summarize recent chat\n"
+        "/help - Show this help message"
+    )
+    await update.message.reply_text(help_text, parse_mode='Markdown')
 
 
 # ===============================
@@ -91,6 +108,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("hello", hello))
 app.add_handler(CommandHandler("history", history))
 app.add_handler(CommandHandler("summarize", summarize))
+app.add_handler(CommandHandler("help", help_command))
 
 # Register Message Handler
 app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
